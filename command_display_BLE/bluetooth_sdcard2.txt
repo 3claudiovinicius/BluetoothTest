@@ -138,5 +138,5 @@ ble.irq(ble_irq)
 # Loop principal
 while True:
     if is_connected==False:
-        print("Esperando conexão...")
+        print("Esperando nova conexão...")
     time.sleep(1)

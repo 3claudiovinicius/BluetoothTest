@@ -1,0 +1,15 @@
+import machine
+import os
+from sdcard import SDCard  # Certifique-se de que está importando a classe SDCard corretamente
+
+# Inicializa o cartão SD
+spi = machine.SPI(1, baudrate=20000000, sck=machine.Pin(18), mosi=machine.Pin(23), miso=machine.Pin(19))
+cs = machine.Pin(5)
+sd = SDCard(spi, cs)
+vfs = os.VfsFat(sd)
+
+# Monta o sistema de arquivos
+os.mount(vfs, "/sd")
+
+# Lista os arquivos no cartão SD
+print(os.listdir("/sd"))

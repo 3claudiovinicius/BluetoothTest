@@ -1,0 +1,13 @@
+# Exclude compiled bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Exclude logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Exclude ampy configuration
+.ampy

@@ -96,10 +96,10 @@ def list_images():
 def on_command_received(event):
     print(f"Valor escrito: ", ble.gatts_read(event[1]))
     try:
-        value = event[1]  # Geralmente os dados estão no terceiro item do evento
-        #command = value.decode('utf-8')#Alterar essa parte para ble.gatts_read(event[1])
-        ble.gatts_read(event[1])
-		if command.startswith('DI:'):
+        value = ble.gatts_read(event[1])  # Geralmente os dados estão no terceiro item do evento
+        command = value.decode('utf-8') # Alterar essa parte para ble.gatts_read(event[1])
+        
+        if command.startswith('DI:'):
             image_name = command.split(':')[1]
             print('Comando para exibir imagem recebido')
             image_path = f'/sd/{image_name}'

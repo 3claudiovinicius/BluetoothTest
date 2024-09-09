@@ -4,7 +4,7 @@ from machine import Pin, SPI
 from sdcard import SDCard
 import os
 import time
-from ili9341 import ILI9341
+from ili9341 import Display
 import bluetooth
 from micropython import const
 
@@ -13,6 +13,7 @@ TFT_CS = const(15)
 TFT_DC = const(2)
 TFT_SCK = const(14)
 TFT_MOSI = const(13)
+
 SD_CS = const(5)
 SD_SCK = const(18)
 SD_MOSI = const(23)
@@ -20,10 +21,10 @@ SD_MISO = const(19)
 
 # Inicialização do SPI para o display TFT
 spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
-display = ILI9341(spi, cs=Pin(TFT_CS), dc=Pin(TFT_DC), rst=Pin(-1))
-
+display = Display(spi, cs=Pin(TFT_CS), dc=Pin(TFT_DC), rst=Pin(0))
 # Inicialização do SPI para o cartão SD
 spi2 = SPI(1, baudrate=20000000, sck=Pin(SD_SCK), mosi=Pin(SD_MOSI), miso=Pin(SD_MISO))
+
 # Função para inicializar o cartão SD e montar o sistema de arquivos
 def init_sd():
     try:
@@ -41,30 +42,42 @@ sd = init_sd()
 device_name="ESP32_Test"
 ble = bluetooth.BLE()
 ble.active(True)
-ble.config(rxbuf=1024)
+#ble.config(rxbuf=1024)
 ble.config(gap_name='device_name')
 ble.config('gap_name')
 # Serviço e Característica BLE usando UUIDs curtos
 SERVICE_UUID = bluetooth.UUID(0x180A)
 CHARACTERISTIC_UUID = bluetooth.UUID(0x2A00)
 characteristics = (
-    (CHARACTERISTIC_UUID, bluetooth.FLAG_WRITE,),
+    (CHARACTERISTIC_UUID, bluetooth.FLAG_READ | bluetooth.FLAG_WRITE | bluetooth.FLAG_NOTIFY),
 )
 command_char = (
     (SERVICE_UUID, characteristics),
 )
 # Configuração do serviço BLE
 srv = ble.gatts_register_services(command_char)
-service_handle, char_handles = srv[0]
+
+adv_data = bytearray([
+    0x02, 0x01, 0x06,  # Flags
+    0x03, 0x03, 0x0D, 0x18,  # Complete List of 16-bit Service Class UUIDs
+    len(device_name) + 1, 0x09  # Length of local name field + type of local name
+]) + device_name.encode('utf-8')
+
+char_handles = srv[0]
 char_handle=char_handles[0]
 ble.gatts_write(char_handle, b'command')
+
+# Inicia a publicidade
+ble.gap_advertise(100, adv_data)
+
+print("BLE ativo e serviço registrado.")
 
 # Função para exibir imagem do cartão SD no display
 def display_image(image_path):
     try:
         with open(image_path, 'rb') as f:
             img_data = f.read()
-            display.fill(ILI9341.BLACK)  # Limpa a tela
+            display.fill(Display.BLACK)  # Limpa a tela
             display.image(0, 0, img_data)
             display.show()
         return True
@@ -81,38 +94,50 @@ def list_images():
 		
 # Callback para tratamento de escrita na característica BLE
 def on_command_received(event):
-    value = event.data
+    print(f"Valor escrito: ", ble.gatts_read(event[1]))
     try:
-        command = value.decode('utf-8')
+        value = ble.gatts_read(event[1])  # Geralmente os dados estão no terceiro item do evento
+        command = value.decode('utf-8') # Alterar essa parte para ble.gatts_read(event[1])
+        
         if command.startswith('DI:'):
             image_name = command.split(':')[1]
+            print('Comando para exibir imagem recebido')
             image_path = f'/sd/{image_name}'
             if display_image(image_path):
                 print(f"Imagem {image_name} exibida no display.")
-                ble.gatts_notify(0, char_handle, b"OK: Imagem exibida")
+                ble.gatts_notify(0, char_handle, b'OK: Imagem exibida')
             else:
                 print(f"Falha ao exibir imagem {image_name} no display.")
-                ble.gatts_notify(0, char_handle, b"ERROR: Falha ao exibir imagem")
+                ble.gatts_notify(0, char_handle, b'ERROR: Falha ao exibir imagem')
         elif command == 'LI':
             images = list_images()
+            print('Comando para listar imagens recebido')
             images_str = ','.join(images)
             ble.gatts_notify(0, char_handle, images_str.encode('utf-8'))
     except Exception as e:
         print("Erro ao processar comando:", e)
-        ble.gatts_notify(0, char_handle, b"ERROR: Falha ao processar comando")
+        ble.gatts_notify(0, char_handle, b'ERROR: Falha ao processar comando')
 		
-# Função de interrupção para eventos BLE
+is_connected = False
+
 def ble_irq(event, data):
-    if event == bluetooth.IRQ_GATTS_WRITE:  # Evento de escrita
+    global is_connected
+    if event == const(3):  # Evento de escrita
+        print("Evento de escrita")
         on_command_received(data)
-ble.irq(handler=ble_irq)
-print("Aguardando conexão BLE...")
+    elif event == const(1):
+        print("Cliente conectado via BLE!")
+        is_connected = True
+    elif event == const(2):
+        print("Aguardando conexão BLE...")
+        is_connected = False
+
+
+# Registra a função de interrupção fora do loop principal
+ble.irq(ble_irq)
 
 # Loop principal
 while True:
-    if ble.connections():
-        print("Cliente conectado via BLE!")
-        time.sleep(1)
-    else:
-        print("Esperando conexão...")
-        time.sleep(1)
+    if is_connected==False:
+        print("Esperando nova conexão...")
+    time.sleep(1)

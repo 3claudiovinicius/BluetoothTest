@@ -77,9 +77,8 @@ def display_image(image_path):
     try:
         with open(image_path, 'rb') as f:
             img_data = f.read()
-            display.fill(Display.BLACK)  # Limpa a tela
-            display.image(0, 0, img_data)
-            display.show()
+            display.clear()  # Limpa a tela
+            display.block(0, 0, 319, 239, img_data)
         return True
     except OSError as e:
         print("Erro ao abrir arquivo:", e)

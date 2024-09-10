@@ -75,10 +75,16 @@ print("BLE ativo e serviço registrado.")
 # Função para exibir imagem do cartão SD no display
 def display_image(image_path):
     try:
-        with open(image_path, 'rb') as f:
-            img_data = f.read()
-            display.clear()  # Limpa a tela
-            display.block(0, 0, 319, 239, img_data)
+        # Limpar a tela antes de desenhar a nova imagem
+        display.display_on()
+        display.clear()
+        
+        # Usar a função draw_image para desenhar a imagem no display
+        #display.draw_image(image_path, x=0, y=0, w=320, h=240)
+        display.draw_circle(160,120,10,0xF800)
+        display.draw_circle(160,120,30,0x07E0)
+        display.draw_circle(160,120,50,0x001F)
+
         return True
     except OSError as e:
         print("Erro ao abrir arquivo:", e)

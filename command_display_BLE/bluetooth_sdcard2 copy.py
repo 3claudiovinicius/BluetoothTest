@@ -1,12 +1,13 @@
 # Import bibliotecas
 import machine
-from machine import Pin, SPI
+from machine import Pin, SPI, PWM
 from sdcard import SDCard
 import os
 import time
-from ili9341 import Display
+from ili9341 import Display, color565
 import bluetooth
 from micropython import const
+from time import sleep
 
 # Definições de pinos
 TFT_CS = const(15)
@@ -20,8 +21,12 @@ SD_MOSI = const(23)
 SD_MISO = const(19)
 
 # Inicialização do SPI para o display TFT
-spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
-display = Display(spi, cs=Pin(TFT_CS), dc=Pin(TFT_DC), rst=Pin(0))
+#spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
+spi=SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
+display = Display(spi, cs=Pin(15), dc=Pin(2), rst=Pin(0))
+pwm_pin=Pin(const(27))
+pwm=PWM(pwm_pin,freq=1000)
+pwm.duty(1023)
 # Inicialização do SPI para o cartão SD
 spi2 = SPI(1, baudrate=20000000, sck=Pin(SD_SCK), mosi=Pin(SD_MOSI), miso=Pin(SD_MISO))
 
@@ -76,14 +81,15 @@ print("BLE ativo e serviço registrado.")
 def display_image(image_path):
     try:
         # Limpar a tela antes de desenhar a nova imagem
-        display.display_on()
-        display.clear()
         
         # Usar a função draw_image para desenhar a imagem no display
         #display.draw_image(image_path, x=0, y=0, w=320, h=240)
-        display.draw_circle(160,120,10,0xF800)
-        display.draw_circle(160,120,30,0x07E0)
-        display.draw_circle(160,120,50,0x001F)
+        display.draw_circle(132, 96, 70,color565(0,255,0))
+        sleep(9)
+        display.draw_circle(132, 96, 70,color565(255,0,0))
+        sleep(9)
+        display.draw_circle(132, 96, 70,color565(0,0,255))
+        sleep(9)
 
         return True
     except OSError as e:

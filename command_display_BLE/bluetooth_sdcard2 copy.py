@@ -24,6 +24,7 @@ SD_MISO = const(19)
 #spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
 spi=SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
 display = Display(spi, cs=Pin(15), dc=Pin(2), rst=Pin(0))
+#liga o backlight
 pwm_pin=Pin(const(27))
 pwm=PWM(pwm_pin,freq=1000)
 pwm.duty(1023)

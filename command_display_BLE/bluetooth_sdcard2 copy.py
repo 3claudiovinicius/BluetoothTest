@@ -8,6 +8,7 @@ from ili9341 import Display, color565
 import bluetooth
 from micropython import const
 from time import sleep
+from sys import implementation
 
 # Definições de pinos
 TFT_CS = const(15)
@@ -19,6 +20,8 @@ SD_CS = const(5)
 SD_SCK = const(18)
 SD_MOSI = const(23)
 SD_MISO = const(19)
+
+print(sys.implementation.name)
 
 # Inicialização do SPI para o display TFT
 #spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))

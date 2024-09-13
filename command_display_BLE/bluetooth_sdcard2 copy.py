@@ -28,6 +28,7 @@ display = Display(spi, cs=Pin(15), dc=Pin(2), rst=Pin(0))
 pwm_pin=Pin(const(27))
 pwm=PWM(pwm_pin,freq=1000)
 pwm.duty(1023)
+
 # Inicialização do SPI para o cartão SD
 spi2 = SPI(1, baudrate=20000000, sck=Pin(SD_SCK), mosi=Pin(SD_MOSI), miso=Pin(SD_MISO))
 

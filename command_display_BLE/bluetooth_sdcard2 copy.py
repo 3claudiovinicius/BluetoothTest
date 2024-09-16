@@ -26,7 +26,7 @@ SD_MISO = const(19)
 def init_display():
     spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
     display = Display(spi, cs=Pin(TFT_CS), dc=Pin(TFT_DC), rst=Pin(0))
-    display.fill_rectangle(0,0,229,309,color565(255,255,255))
+    #display.fill_rectangle(0,0,229,309,color565(255,255,255))
     pwm = PWM(Pin(TFT_PWM), freq=1000)
     pwm.duty(1023)  # Liga o backlight
     return display
@@ -76,16 +76,23 @@ def setup_ble_services(ble):
 # Função para exibir imagem do cartão SD no display
 def display_image(display, image_path):
     try:
-        display.draw_circle(132, 96, 70, color565(0, 255, 0))
-        sleep(9)
-        display.draw_circle(132, 96, 70, color565(255, 0, 0))
-        sleep(9)
-        display.draw_circle(132, 96, 70, color565(0, 0, 255))
-        sleep(9)
+        prepare_display(display)
+        display.display_image(image_path)
+        #display.draw_circle(132, 96, 70, color565(0, 255, 0))
+        #sleep(9)
+        #display.draw_circle(132, 96, 70, color565(255, 0, 0))
+        #sleep(9)
+        #display.draw_circle(132, 96, 70, color565(0, 0, 255))
+        #sleep(9)
         return True
     except OSError as e:
         print("Erro ao abrir arquivo:", e)
         return False
+
+def prepare_display(display):
+    display.display_on()
+    display.clear()
+
 
 # Função para listar imagens no cartão SD
 def list_images():
@@ -109,6 +116,25 @@ def on_command_received(event, ble, display, char_handle):
                 ble.gatts_notify(0, char_handle, b'OK: Imagem exibida')
             else:
                 ble.gatts_notify(0, char_handle, b'ERROR: Falha ao exibir imagem')
+
+        elif command = 'R' or 'r':
+            prepare_display(display)
+            display.fill_rectangle(0,0,229,309,color565(255,0,0))
+            print(f"Red screen displayed")
+            ble.gatts_notify(0,char_handle,b'red screen')
+
+        elif command = 'G' or 'g':
+            prepare_display(display)
+            display.fill_rectangle(0,0,229,309,color565(0,255,0))
+            print(f"Green screen displayed")
+            ble.gatts_notify(0,char_handle,b'green screen')
+        
+        elif command = 'B' or 'b':
+            prepare_display(display)
+            display.fill_rectangle(0,0,229,309,color565(0,0,255))
+            print(f"Blue screen displayed")
+            ble.gatts_notify(0,char_handle,b'blue screen')
+
         elif command == 'LI':
             images = list_images()
             images_str = ','.join(images)

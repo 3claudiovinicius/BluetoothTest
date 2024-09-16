@@ -93,8 +93,8 @@ class Display(object):
         (True, 270): 0xA0  # 1010 0000
     }
 
-    def __init__(self, spi, cs, dc, rst, width=240, height=320, rotation=0,
-                 mirror=False, bgr=True, gamma=True):
+    def __init__(self, spi, cs, dc, rst, width=240, height=320, rotation=90,
+                 mirror=False, bgr=False, gamma=True):
         """Initialize OLED.
 
         Args:

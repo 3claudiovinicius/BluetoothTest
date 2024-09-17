@@ -89,10 +89,22 @@ def display_image(display, image_path):
         print("Erro ao abrir arquivo:", e)
         return False
 
-def prepare_display(display):
-    display.display_on()
-    display.clear()
+def prepare_display(display, brightness=None, clear=True, bg_color=color565(0, 0, 0)):
+    """Prepara o display para uso.
+    Args:
+        display: Objeto display que será manipulado.
+        brightness (Optional int): Nível de brilho (0-255).
+        clear (Optional bool): Se deve limpar o display (default True).
+        bg_color (Optional int): Cor de fundo ao limpar o display (default preto).
+    """
+    if not display.is_on():
+        display.display_on()  # Liga o display apenas se estiver desligado
 
+    if brightness is not None:
+        display.set_brightness(brightness)  # Ajusta o brilho se necessário
+
+    if clear:
+        display.clear(bg_color)  # Limpa o display com a cor de fundo escolhida
 
 # Função para listar imagens no cartão SD
 def list_images():
@@ -105,9 +117,11 @@ def list_images():
 # Callback para tratamento de escrita na característica BLE
 def on_command_received(event, ble, display, char_handle):
     try:
+        # Lê o valor enviado pelo cliente BLE
         value = ble.gatts_read(event[1])
         command = value.decode('utf-8')
         
+        # Verifica se o comando começa com 'DI:' para exibir uma imagem
         if command.startswith('DI:'):
             image_name = command.split(':')[1]
             image_path = f'/sd/{image_name}'
@@ -117,31 +131,37 @@ def on_command_received(event, ble, display, char_handle):
             else:
                 ble.gatts_notify(0, char_handle, b'ERROR: Falha ao exibir imagem')
 
-        elif command = 'R' or 'r':
+        # Verifica se o comando é 'R' ou 'r' para exibir a tela vermelha
+        elif command in ['R', 'r']:
             prepare_display(display)
-            display.fill_rectangle(0,0,229,309,color565(255,0,0))
+            display.fill_rectangle(0, 0, 229, 309, color565(255, 0, 0))
             print(f"Red screen displayed")
-            ble.gatts_notify(0,char_handle,b'red screen')
+            ble.gatts_notify(0, char_handle, b'red screen')
 
-        elif command = 'G' or 'g':
+        # Verifica se o comando é 'G' ou 'g' para exibir a tela verde
+        elif command in ['G', 'g']:
             prepare_display(display)
-            display.fill_rectangle(0,0,229,309,color565(0,255,0))
+            display.fill_rectangle(0, 0, 229, 309, color565(0, 255, 0))
             print(f"Green screen displayed")
-            ble.gatts_notify(0,char_handle,b'green screen')
-        
-        elif command = 'B' or 'b':
-            prepare_display(display)
-            display.fill_rectangle(0,0,229,309,color565(0,0,255))
-            print(f"Blue screen displayed")
-            ble.gatts_notify(0,char_handle,b'blue screen')
+            ble.gatts_notify(0, char_handle, b'green screen')
 
+        # Verifica se o comando é 'B' ou 'b' para exibir a tela azul
+        elif command in ['B', 'b']:
+            prepare_display(display)
+            display.fill_rectangle(0, 0, 229, 309, color565(0, 0, 255))
+            print(f"Blue screen displayed")
+            ble.gatts_notify(0, char_handle, b'blue screen')
+
+        # Verifica se o comando é 'LI' para listar imagens
         elif command == 'LI':
             images = list_images()
             images_str = ','.join(images)
             ble.gatts_notify(0, char_handle, images_str.encode('utf-8'))
+            
     except Exception as e:
         print("Erro ao processar comando:", e)
         ble.gatts_notify(0, char_handle, b'ERROR: Falha ao processar comando')
+
 
 # Interrupção BLE
 def ble_irq(event, data, ble, display, char_handle):

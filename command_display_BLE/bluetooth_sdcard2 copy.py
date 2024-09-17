@@ -22,6 +22,11 @@ SD_SCK = const(18)
 SD_MOSI = const(23)
 SD_MISO = const(19)
 
+# Desligar o LED vermelho
+RLED = const(4)
+RLED_pin = Pin(RLED,Pin.OUT)
+RLED_pin.value(1)
+
 # Inicialização do SPI para o display TFT
 def init_display():
     spi = SPI(2, baudrate=20000000, sck=Pin(TFT_SCK), mosi=Pin(TFT_MOSI))
@@ -77,7 +82,7 @@ def setup_ble_services(ble):
 def display_image(display, image_path):
     try:
         prepare_display(display)
-        display.display_image(image_path)
+        display.draw_image(image_path)
         #display.draw_circle(132, 96, 70, color565(0, 255, 0))
         #sleep(9)
         #display.draw_circle(132, 96, 70, color565(255, 0, 0))
@@ -97,8 +102,8 @@ def prepare_display(display, brightness=None, clear=True, bg_color=color565(0, 0
         clear (Optional bool): Se deve limpar o display (default True).
         bg_color (Optional int): Cor de fundo ao limpar o display (default preto).
     """
-    if not display.is_on():
-        display.display_on()  # Liga o display apenas se estiver desligado
+    #if display.display_off():
+    #    display.display_on()  # Liga o display apenas se estiver desligado
 
     if brightness is not None:
         display.set_brightness(brightness)  # Ajusta o brilho se necessário
@@ -109,13 +114,14 @@ def prepare_display(display, brightness=None, clear=True, bg_color=color565(0, 0
 # Função para listar imagens no cartão SD
 def list_images():
     try:
-        return [f for f in os.listdir('/sd') if f.endswith('.jpg') or f.endswith('.png')]
+        return [f for f in os.listdir('/sd') if f.endswith('.jpg') or f.endswith('.raw')]
     except OSError as e:
         print("Erro ao listar arquivos:", e)
         return []
 
 # Callback para tratamento de escrita na característica BLE
 def on_command_received(event, ble, display, char_handle):
+    print(f"Valor escrito: ", ble.gatts_read(event[1]))
     try:
         # Lê o valor enviado pelo cliente BLE
         value = ble.gatts_read(event[1])
@@ -151,6 +157,13 @@ def on_command_received(event, ble, display, char_handle):
             display.fill_rectangle(0, 0, 229, 309, color565(0, 0, 255))
             print(f"Blue screen displayed")
             ble.gatts_notify(0, char_handle, b'blue screen')
+        
+        # Verifica se o comando é 'B' ou 'b' para exibir a tela azul
+        elif command in ['W', 'w']:
+            prepare_display(display)
+            display.fill_rectangle(0, 0, 229, 309, color565(255, 255, 255))
+            print(f"White screen displayed")
+            ble.gatts_notify(0, char_handle, b'white screen')
 
         # Verifica se o comando é 'LI' para listar imagens
         elif command == 'LI':
@@ -189,7 +202,9 @@ def main():
 
     # Configuração do serviço BLE
     
-    char_handle = setup_ble_services(ble)
+    char_handles = setup_ble_services(ble)
+    char_handle = char_handles[0]
+    ble.gatts_write(char_handle, b'command')
 
     # Iniciar publicidade
     advertise_ble(ble, device_name)

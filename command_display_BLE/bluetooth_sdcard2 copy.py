@@ -204,7 +204,7 @@ def main():
     
     char_handles = setup_ble_services(ble)
     char_handle = char_handles[0]
-    ble.gatts_write(char_handle, b'command')
+    #ble.gatts_write(char_handle, b'command')
 
     # Iniciar publicidade
     advertise_ble(ble, device_name)

@@ -101,9 +101,14 @@ def prepare_display(display, brightness=None, clear=True, bg_color=color565(0, 0
         brightness (Optional int): Nível de brilho (0-255).
         clear (Optional bool): Se deve limpar o display (default True).
         bg_color (Optional int): Cor de fundo ao limpar o display (default preto).
+    
+    
     """
+    #display.cleanup()
+
     #if display.display_off():
     #    display.display_on()  # Liga o display apenas se estiver desligado
+    display.reset_mpy
 
     if brightness is not None:
         display.set_brightness(brightness)  # Ajusta o brilho se necessário
@@ -119,6 +124,24 @@ def list_images():
         print("Erro ao listar arquivos:", e)
         return []
 
+def send_notification(ble, char_handle, message, chunk_size=20):
+    """
+    Função para enviar uma mensagem como notificação por BLE, dividindo em "chunks" se necessário.
+    
+    :param ble: Objeto BLE para enviar as notificações.
+    :param char_handle: Handle da característica BLE para enviar os dados.
+    :param message: A mensagem que será enviada como notificação.
+    :param chunk_size: Tamanho máximo de cada "chunk" (20 bytes por padrão).
+    """
+    # Codificar a mensagem como bytes (UTF-8)
+    data = message.encode('utf-8')
+    
+    # Dividir os dados em partes menores ("chunks") e enviar
+    for i in range(0, len(data), chunk_size):
+        chunk = data[i:i + chunk_size]
+        ble.gatts_notify(0, char_handle, chunk)
+
+
 # Callback para tratamento de escrita na característica BLE
 def on_command_received(event, ble, display, char_handle):
     print(f"Valor escrito: ", ble.gatts_read(event[1]))
@@ -133,47 +156,71 @@ def on_command_received(event, ble, display, char_handle):
             image_path = f'/sd/{image_name}'
             if display_image(display, image_path):
                 print(f"Imagem {image_name} exibida no display.")
-                ble.gatts_notify(0, char_handle, b'OK: Imagem exibida')
+                #ble.gatts_notify(0, char_handle, b'OK: Imagem exibida')
+                message = "OK: Imagem exibida"
+                send_notification(ble, char_handle, message)
             else:
-                ble.gatts_notify(0, char_handle, b'ERROR: Falha ao exibir imagem')
+                #ble.gatts_notify(0, char_handle, b'ERROR: Falha ao exibir imagem')
+                message = "ERROR: Falha ao exibir imagem"
+                send_notification(ble, char_handle, message)
 
         # Verifica se o comando é 'R' ou 'r' para exibir a tela vermelha
         elif command in ['R', 'r']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 229, 309, color565(255, 0, 0))
+            display.fill_rectangle(0, 0, 309, 229, color565(255, 0, 0))
             print(f"Red screen displayed")
-            ble.gatts_notify(0, char_handle, b'red screen')
+            #ble.gatts_notify(0, char_handle, b'red screen')
+            message = "red screen"
+            send_notification(ble, char_handle, message)
 
         # Verifica se o comando é 'G' ou 'g' para exibir a tela verde
         elif command in ['G', 'g']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 229, 309, color565(0, 255, 0))
+            display.fill_rectangle(0, 0, 309, 229, color565(0, 255, 0))
             print(f"Green screen displayed")
-            ble.gatts_notify(0, char_handle, b'green screen')
+            #ble.gatts_notify(0, char_handle, b'green screen')
+            message = "green screen"
+            send_notification(ble, char_handle, message)
 
         # Verifica se o comando é 'B' ou 'b' para exibir a tela azul
         elif command in ['B', 'b']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 229, 309, color565(0, 0, 255))
+            display.fill_rectangle(0, 0, 309, 229, color565(0, 0, 255))
             print(f"Blue screen displayed")
-            ble.gatts_notify(0, char_handle, b'blue screen')
+            #ble.gatts_notify(0, char_handle, b'blue screen')
+            message = "blue screen"
+            send_notification(ble, char_handle, message)
         
         # Verifica se o comando é 'B' ou 'b' para exibir a tela azul
         elif command in ['W', 'w']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 229, 309, color565(255, 255, 255))
+            display.fill_rectangle(0, 0, 309, 229, color565(255, 255, 255))
             print(f"White screen displayed")
-            ble.gatts_notify(0, char_handle, b'white screen')
+            #ble.gatts_notify(0, char_handle, b'white screen')
+            message = "white screen"
+            send_notification(ble, char_handle, message)
+        
+        elif command in ['BK', 'bk']:
+            prepare_display(display)
+            display.fill_rectangle(0, 0, 309, 229, color565(0, 0, 0))
+            print(f"Black screen displayed")
+            #ble.gatts_notify(0, char_handle, b'black screen')
+            message = "black screen"
+            send_notification(ble, char_handle, message)
 
         # Verifica se o comando é 'LI' para listar imagens
         elif command == 'LI':
             images = list_images()
             images_str = ','.join(images)
-            ble.gatts_notify(0, char_handle, images_str.encode('utf-8'))
+            #ble.gatts_notify(0, char_handle, images_str.encode('utf-8'))
+            message = images_str
+            send_notification(ble, char_handle, message)
             
     except Exception as e:
         print("Erro ao processar comando:", e)
-        ble.gatts_notify(0, char_handle, b'ERROR: Falha ao processar comando')
+        #ble.gatts_notify(0, char_handle, b'ERROR: Falha ao processar comando')
+        message = "ERROR: Falha ao processar comando"
+        send_notification(ble, char_handle, message)
 
 
 # Interrupção BLE
@@ -204,7 +251,7 @@ def main():
     
     char_handles = setup_ble_services(ble)
     char_handle = char_handles[0]
-    ble.gatts_write(char_handle, b'command')
+    #ble.gatts_write(char_handle, b'command')
 
     # Iniciar publicidade
     advertise_ble(ble, device_name)

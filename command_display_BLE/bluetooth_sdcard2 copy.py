@@ -108,7 +108,8 @@ def prepare_display(display, brightness=None, clear=True, bg_color=color565(0, 0
 
     #if display.display_off():
     #    display.display_on()  # Liga o display apenas se estiver desligado
-    display.reset_mpy
+    #display.reset_mpy
+    display.clear()
 
     if brightness is not None:
         display.set_brightness(brightness)  # Ajusta o brilho se necessário
@@ -137,6 +138,7 @@ def send_notification(ble, char_handle, message, chunk_size=20):
     data = message.encode('utf-8')
     
     # Dividir os dados em partes menores ("chunks") e enviar
+    # Revisar esse loop para enviar um chunk + pedido para "continuar" ou "voltar" 
     for i in range(0, len(data), chunk_size):
         chunk = data[i:i + chunk_size]
         ble.gatts_notify(0, char_handle, chunk)
@@ -167,7 +169,7 @@ def on_command_received(event, ble, display, char_handle):
         # Verifica se o comando é 'R' ou 'r' para exibir a tela vermelha
         elif command in ['R', 'r']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 309, 229, color565(255, 0, 0))
+            display.fill_rectangle(0, 0, 229, 309, color565(255, 0, 0))
             print(f"Red screen displayed")
             #ble.gatts_notify(0, char_handle, b'red screen')
             message = "red screen"
@@ -176,7 +178,7 @@ def on_command_received(event, ble, display, char_handle):
         # Verifica se o comando é 'G' ou 'g' para exibir a tela verde
         elif command in ['G', 'g']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 309, 229, color565(0, 255, 0))
+            display.fill_rectangle(0, 0, 229, 309, color565(0, 255, 0))
             print(f"Green screen displayed")
             #ble.gatts_notify(0, char_handle, b'green screen')
             message = "green screen"
@@ -185,7 +187,7 @@ def on_command_received(event, ble, display, char_handle):
         # Verifica se o comando é 'B' ou 'b' para exibir a tela azul
         elif command in ['B', 'b']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 309, 229, color565(0, 0, 255))
+            display.fill_rectangle(0, 0, 229, 309, color565(0, 0, 255))
             print(f"Blue screen displayed")
             #ble.gatts_notify(0, char_handle, b'blue screen')
             message = "blue screen"
@@ -194,7 +196,7 @@ def on_command_received(event, ble, display, char_handle):
         # Verifica se o comando é 'B' ou 'b' para exibir a tela azul
         elif command in ['W', 'w']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 309, 229, color565(255, 255, 255))
+            display.fill_rectangle(0, 0, 229, 309, color565(255, 255, 255))
             print(f"White screen displayed")
             #ble.gatts_notify(0, char_handle, b'white screen')
             message = "white screen"
@@ -202,7 +204,7 @@ def on_command_received(event, ble, display, char_handle):
         
         elif command in ['BK', 'bk']:
             prepare_display(display)
-            display.fill_rectangle(0, 0, 309, 229, color565(0, 0, 0))
+            display.fill_rectangle(0, 0, 229, 309, color565(0, 0, 0))
             print(f"Black screen displayed")
             #ble.gatts_notify(0, char_handle, b'black screen')
             message = "black screen"

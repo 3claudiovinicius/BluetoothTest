@@ -93,7 +93,7 @@ class Display(object):
         (True, 270): 0xA0  # 1010 0000
     }
 
-    def __init__(self, spi, cs, dc, rst, width=320, height=240, rotation=180,
+    def __init__(self, spi, cs, dc, rst, width=240, height=320, rotation=90,
                  mirror=False, bgr=False, gamma=True):
         """Initialize OLED.
 
@@ -337,7 +337,7 @@ class Display(object):
         line = color.to_bytes(2, 'big') * w
         self.block(x, y, x + w - 1, y, line)
 
-    def draw_image(self, path, x=0, y=0, w=320, h=240):
+    def draw_image(self, path, x=0, y=0, w=240, h=320):
         """Draw image from flash.
 
         Args:

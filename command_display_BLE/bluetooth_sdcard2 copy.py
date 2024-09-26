@@ -67,8 +67,8 @@ def advertise_ble(ble, device_name):
 
 # Configuração de serviços e características BLE
 def setup_ble_services(ble):
-    SERVICE_UUID = bluetooth.UUID("2031e55c-9c2a-4873-b369-b26ec6f6eb5f")
-    CHARACTERISTIC_UUID = bluetooth.UUID("fa1e17cf-2dce-493f-b070-260547a396aa")
+    SERVICE_UUID = bluetooth.UUID(0x180A)
+    CHARACTERISTIC_UUID = bluetooth.UUID(0x2A00)
     characteristics = (
         (CHARACTERISTIC_UUID, bluetooth.FLAG_READ | bluetooth.FLAG_WRITE | bluetooth.FLAG_NOTIFY),
     )

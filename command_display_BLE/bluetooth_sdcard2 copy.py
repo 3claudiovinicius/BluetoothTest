@@ -125,6 +125,7 @@ def list_images():
         print("Erro ao listar arquivos:", e)
         return []
 
+
 def send_notification(ble, char_handle, message, chunk_size=20):
     """
     Envia uma mensagem por BLE dividida em "chunks", adicionando perguntas de controle.
@@ -153,6 +154,39 @@ def send_notification(ble, char_handle, message, chunk_size=20):
     except Exception as e:
         print(f"Erro ao enviar notificação BLE: {e}")
 
+def welcome_page(ble, char_handle, conn_handle):
+    """
+    Função para enviar a mensagem de boas-vindas e opções de ação para o cliente conectado.
+    
+    :param ble: Objeto BLE para enviar as notificações.
+    :param char_handle: Handle da característica BLE para enviar os dados.
+    :param conn_handle: Handle da conexão do cliente.
+    """
+    try:
+        # Envia mensagem de conexão
+        send_notification(ble, char_handle, "Conectado!")
+        
+        # Aguarda 2 segundos
+        time.sleep(2)
+
+        # Envia as opções de ação
+        options = (
+            "1- Listar imagens [LI], "
+            "2- Mostrar imagem [DI], "
+            "3- Mostrar retângulo vermelho [R/r], "
+            "4- Mostrar retângulo verde [G/g], "
+            "5- Mostrar retângulo azul [B/b], "
+            "6- Mostrar retângulo preto [BK/bk], "
+            "7- Mostrar retângulo branco [W/w], "
+            "8-Desconectar[D]?"
+        )
+        send_notification(ble, char_handle, options)
+
+    except Exception as e:
+        print(f"Ocorreu um erro na página de boas-vindas: {e}")
+
+# Exemplo de uso
+# welcome_page(ble_instance, char_handle_instance, conn_handle_instance)
 
 
 # Callback para tratamento de escrita na característica BLE
@@ -228,7 +262,11 @@ def on_command_received(event, ble, display, char_handle):
             #ble.gatts_notify(0, char_handle, images_str.encode('utf-8'))
             message = images_str
             send_notification(ble, char_handle, message)
-            
+        
+        elif command == 'D':
+            ble.gatts_disconnect(event[0])
+            print("Cliente desconectado")        
+           
     except Exception as e:
         print("Erro ao processar comando:", e)
         #ble.gatts_notify(0, char_handle, b'ERROR: Falha ao processar comando')
@@ -244,6 +282,7 @@ def ble_irq(event, data, ble, display, char_handle):
     elif event == const(1):
         is_connected = True
         print("Cliente conectado via BLE!")
+        welcome_page()
     elif event == const(2):
         is_connected = False
         print("Cliente desconectado do BLE.")

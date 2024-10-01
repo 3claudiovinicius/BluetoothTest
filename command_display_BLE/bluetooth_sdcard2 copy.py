@@ -154,7 +154,7 @@ def send_notification(ble, char_handle, message, chunk_size=20):
     except Exception as e:
         print(f"Erro ao enviar notificação BLE: {e}")
 
-def welcome_page(ble, char_handle, conn_handle):
+def welcome_page(ble, char_handle):
     """
     Função para enviar a mensagem de boas-vindas e opções de ação para o cliente conectado.
     
@@ -282,7 +282,7 @@ def ble_irq(event, data, ble, display, char_handle):
     elif event == const(1):
         is_connected = True
         print("Cliente conectado via BLE!")
-        welcome_page()
+        welcome_page(ble, char_handle)
     elif event == const(2):
         is_connected = False
         print("Cliente desconectado do BLE.")
